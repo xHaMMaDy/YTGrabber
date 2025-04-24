@@ -115,16 +115,47 @@ python src/main.py
 ## 📸 Screenshots
 
 <div align="center">
-  <img src="https://i.imgur.com/6rzQVkp.png" alt="Main Window" width="900"/>
-  <p><em>Main application window with dark theme and video information</em></p>
-  
-  <br/>
-  
-  <img src="https://i.imgur.com/hML5r5V.png" alt="Playlist Download Interface" width="900"/>
-  <p><em>Playlist download interface with batch processing options</em></p>
+  <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px;">
+    <div style="flex: 1; min-width: 400px; max-width: 48%;">
+      <img src="https://i.imgur.com/6rzQVkp.png" alt="Main Window" width="100%"/>
+      <p><em>Main application window with dark theme and video information</em></p>
+    </div>
+    <div style="flex: 1; min-width: 400px; max-width: 48%;">
+      <img src="https://i.imgur.com/hML5r5V.png" alt="Playlist Download Interface" width="100%"/>
+      <p><em>Playlist download interface with batch processing options</em></p>
+    </div>
+  </div>
 </div>
 
 ## ⚙️ Configuration
+
+### FFmpeg Setup
+Before running YTGrabber, you need to set up FFmpeg:
+
+1. Download the required FFmpeg executables:
+   - [FFmpeg](https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip) (Direct download link to the essentials build)
+   - Alternatively, visit [FFmpeg's official download page](https://ffmpeg.org/download.html)
+
+2. Extract the downloaded ZIP file
+3. Locate the `bin` folder in the extracted directory
+4. Copy the following files:
+   - `ffmpeg.exe`
+   - `ffplay.exe`
+   - `ffprobe.exe`
+5. Create an `assets` folder in the YTGrabber root directory if it doesn't exist
+6. Paste the three executable files into the `assets` folder
+
+Your directory structure should look like:
+```
+YTGrabber/
+├── assets/
+│   ├── ffmpeg.exe
+│   ├── ffplay.exe
+│   ├── ffprobe.exe
+├── src/
+├── requirements.txt
+└── ...
+```
 
 ### Output Settings
 - Custom download directory
