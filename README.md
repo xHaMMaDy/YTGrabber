@@ -115,16 +115,18 @@ python src/main.py
 ## 📸 Screenshots
 
 <div align="center">
-  <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 20px;">
-    <div style="flex: 1; min-width: 400px; max-width: 48%;">
-      <img src="https://i.imgur.com/6rzQVkp.png" alt="Main Window" width="100%"/>
-      <p><em>Main application window with dark theme and video information</em></p>
-    </div>
-    <div style="flex: 1; min-width: 400px; max-width: 48%;">
-      <img src="https://i.imgur.com/hML5r5V.png" alt="Playlist Download Interface" width="100%"/>
-      <p><em>Playlist download interface with batch processing options</em></p>
-    </div>
-  </div>
+  <table>
+    <tr>
+      <td width="50%">
+        <img src="https://i.imgur.com/6rzQVkp.png" alt="Main Window" width="100%"/>
+        <p align="center"><em>Main application window with dark theme and video information</em></p>
+      </td>
+      <td width="50%">
+        <img src="https://i.imgur.com/hML5r5V.png" alt="Playlist Download Interface" width="100%"/>
+        <p align="center"><em>Playlist download interface with batch processing options</em></p>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ## ⚙️ Configuration
