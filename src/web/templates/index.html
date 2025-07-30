@@ -1,0 +1,704 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center mb-8" x-data="settingsModal()">
+    <h1 class="text-4xl font-bold text-red-500 inline-block">YTGrabber</h1>
+    <button @click="open()" class="ml-4 text-gray-400 hover:text-white" title="Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    </button>
+
+    <!-- Settings Modal -->
+    <div x-show="isOpen" @keydown.escape.window="close()" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="isOpen" @click="close()" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div x-show="isOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-white" id="modal-title">Settings</h3>
+                    <div class="mt-4 space-y-4">
+                        <div>
+                            <label for="max_concurrent_downloads" class="block text-sm font-medium text-gray-300">Max Concurrent Downloads</label>
+                            <input type="number" x-model.number="form.max_concurrent_downloads" id="max_concurrent_downloads" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg px-3 py-2">
+                        </div>
+                        <div>
+                            <label for="output_dir" class="block text-sm font-medium text-gray-300">Output Directory (on server)</label>
+                            <input type="text" x-model="form.output_dir" id="output_dir" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-lg px-3 py-2">
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button @click="save()" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">Save</button>
+                    <button @click="close()" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-600 shadow-sm px-4 py-2 bg-gray-700 text-base font-medium text-white hover:bg-gray-600 sm:mt-0 sm:w-auto sm:text-sm">Cancel</button>
+                </div>
+                <p x-show="message" class="text-center text-sm pb-4" x-text="message"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div x-data="{ tab: 'single' }">
+    <div class="mb-4 border-b border-gray-700">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+            <a href="#" @click.prevent="tab = 'single'" :class="{ 'border-red-500 text-red-500': tab === 'single', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500': tab !== 'single' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Single Download
+            </a>
+            <a href="#" @click.prevent="tab = 'playlist'" :class="{ 'border-red-500 text-red-500': tab === 'playlist', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500': tab !== 'playlist' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Playlist Download
+            </a>
+            <a href="#" @click.prevent="tab = 'batch'" :class="{ 'border-red-500 text-red-500': tab === 'batch', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500': tab !== 'batch' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Batch Download
+            </a>
+            <a href="#" @click.prevent="tab = 'history'" :class="{ 'border-red-500 text-red-500': tab === 'history', 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500': tab !== 'history' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                Download History
+            </a>
+        </nav>
+    </div>
+
+    <div>
+        <div x-show="tab === 'single'" x-data="singleDownload()">
+            <h2 class="text-2xl font-semibold mb-4">Single Video Download</h2>
+
+            <!-- URL Input Form -->
+            <form @submit.prevent="fetchInfo">
+                <div class="flex space-x-2">
+                    <input type="text" x-model="url" placeholder="Enter YouTube video URL" class="flex-grow bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <button type="submit" :disabled="loading" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50">
+                        <span x-show="!loading">Fetch Info</span>
+                        <span x-show="loading">Fetching...</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading Spinner -->
+            <div x-show="loading" class="text-center py-8">
+                <p>Loading...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div x-show="error" class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg my-4" x-text="error">
+            </div>
+
+            <!-- Video Info Display -->
+            <div x-show="videoInfo.title" class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-1">
+                    <img :src="videoInfo.thumbnail" alt="Video Thumbnail" class="rounded-lg">
+                </div>
+                <div class="md:col-span-2">
+                    <h3 class="text-2xl font-bold" x-text="videoInfo.title"></h3>
+                    <p class="text-gray-400 mt-2" x-text="videoInfo.uploader"></p>
+                    <p class="text-gray-400 mt-1" x-text="`Duration: ${formatDuration(videoInfo.duration)}`"></p>
+
+                    <div class="mt-4">
+                        <label for="format" class="block text-sm font-medium text-gray-300">Select Format:</label>
+                        <select id="format" x-model="selectedFormat" class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <template x-for="format in videoInfo.formats" :key="format.format_id">
+                                <option :value="format.format_id" x-text="format.format_note || format.format_id"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div class="mt-6">
+                        <button @click="startDownload" :disabled="downloadTask.status === 'downloading'" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50">
+                            Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Download Progress -->
+            <div x-show="downloadTask.status" class="mt-8 p-4 bg-gray-800 rounded-lg">
+                <h4 class="text-lg font-semibold">Download Progress</h4>
+                <div class="mt-2">
+                    <p>Status: <span class="font-mono" x-text="downloadTask.status"></span></p>
+                    <div x-show="downloadTask.status === 'downloading'" class="w-full bg-gray-700 rounded-full h-4 mt-2">
+                        <div class="bg-red-600 h-4 rounded-full" :style="`width: ${downloadTask.progress || 0}%`"></div>
+                    </div>
+                    <p x-show="downloadTask.progress" class="text-sm text-gray-400" x-text="`${(downloadTask.progress || 0).toFixed(1)}%`"></p>
+                    <p x-show="downloadTask.speed" class="text-sm text-gray-400">Speed: <span x-text="downloadTask.speed"></span></p>
+                    <p x-show="downloadTask.eta" class="text-sm text-gray-400">ETA: <span x-text="downloadTask.eta"></span></p>
+                </div>
+                <div x-show="downloadTask.status === 'completed'" class="mt-4">
+                    <p class="text-green-400">Download complete!</p>
+                    <a :href="downloadTask.filepath" target="_blank" class="text-red-500 hover:underline">Click here to download the file</a>
+                </div>
+                <div x-show="downloadTask.status === 'error'" class="mt-4">
+                    <p class="text-red-400">An error occurred:</p>
+                    <p class="font-mono text-sm text-red-300" x-text="downloadTask.error"></p>
+                </div>
+            </div>
+        </div>
+        <div x-show="tab === 'playlist'" x-data="playlistDownload()">
+            <h2 class="text-2xl font-semibold mb-4">Playlist Download</h2>
+
+            <!-- URL Input Form -->
+            <form @submit.prevent="fetchPlaylist">
+                <div class="flex space-x-2">
+                    <input type="text" x-model="url" placeholder="Enter YouTube playlist URL" class="flex-grow bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <button type="submit" :disabled="loading" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50">
+                        <span x-show="!loading">Fetch Playlist</span>
+                        <span x-show="loading">Fetching...</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading Spinner -->
+            <div x-show="loading" class="text-center py-8">
+                <p>Loading...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div x-show="error" class="bg-red-900 border border-red-700 text-red-200 px-4 py-3 rounded-lg my-4" x-text="error">
+            </div>
+
+            <!-- Playlist Info and Video Table -->
+            <div x-show="playlistTitle" class="mt-8">
+                <h3 class="text-xl font-bold" x-text="playlistTitle"></h3>
+                <p class="text-gray-400" x-text="`${videos.length} videos`"></p>
+
+                <div class="flex space-x-2 my-4">
+                    <button @click="toggleSelectAll(true)" class="bg-gray-700 hover:bg-gray-600 text-white text-sm py-1 px-3 rounded-lg">Select All</button>
+                    <button @click="toggleSelectAll(false)" class="bg-gray-700 hover:bg-gray-600 text-white text-sm py-1 px-3 rounded-lg">Deselect All</button>
+                </div>
+
+                <div class="overflow-x-auto bg-gray-800 rounded-lg">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2">
+                                    <input type="checkbox" @change="toggleSelectAll($event.target.checked)" class="bg-gray-700 border-gray-600 rounded">
+                                </th>
+                                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Title</th>
+                                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700">
+                            <template x-for="video in videos" :key="video.id">
+                                <tr class="hover:bg-gray-700">
+                                    <td class="px-4 py-2">
+                                        <input type="checkbox" x-model="video.selected" class="bg-gray-700 border-gray-600 rounded">
+                                    </td>
+                                    <td class="px-4 py-2" x-text="video.title"></td>
+                                    <td class="px-4 py-2" x-text="formatDuration(video.duration)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="playlist-quality" class="block text-sm font-medium text-gray-300">Quality:</label>
+                        <select id="playlist-quality" x-model="quality" class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <option value="best">Best (Video+Audio)</option>
+                            <option value="1080p">1080p</option>
+                            <option value="720p">720p</option>
+                            <option value="bestaudio">Best (Audio Only)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                         <label for="playlist-download" class="block text-sm font-medium text-transparent">.</label>
+                        <button id="playlist-download" @click="startPlaylistDownload" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">
+                            Download Selected (<span x-text="selectedVideoCount"></span>)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Download Progress -->
+                <div x-show="downloadTasks.length > 0" class="mt-8 p-4 bg-gray-800 rounded-lg">
+                    <h4 class="text-lg font-semibold">Download Progress</h4>
+                    <div class="mt-2 space-y-4">
+                        <template x-for="task in downloadTasks" :key="task.id">
+                            <div>
+                                <p class="truncate" x-text="task.title"></p>
+                                <p class="text-sm font-mono" x-text="task.status"></p>
+                                <div x-show="task.status === 'downloading'" class="w-full bg-gray-700 rounded-full h-2 mt-1">
+                                    <div class="bg-red-600 h-2 rounded-full" :style="`width: ${task.progress || 0}%`"></div>
+                                </div>
+                                <div x-show="task.status === 'completed'">
+                                    <a :href="task.filepath" target="_blank" class="text-red-500 hover:underline text-sm">Download file</a>
+                                </div>
+                                <div x-show="task.status === 'error'">
+                                    <p class="text-red-400 text-sm" x-text="task.error"></p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div x-show="tab === 'batch'" x-data="batchDownload()">
+            <h2 class="text-2xl font-semibold mb-4">Batch Download</h2>
+            <p class="text-gray-400 mb-4">Enter one YouTube URL per line.</p>
+
+            <textarea x-model="urls" rows="8" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="https://www.youtube.com/watch?v=..."></textarea>
+
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label for="batch-quality" class="block text-sm font-medium text-gray-300">Quality:</label>
+                    <select id="batch-quality" x-model="quality" class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <option value="best">Best (Video+Audio)</option>
+                        <option value="1080p">1080p</option>
+                        <option value="720p">720p</option>
+                        <option value="bestaudio">Best (Audio Only)</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="batch-download" class="block text-sm font-medium text-transparent">.</label>
+                    <button id="batch-download" @click="startBatchDownload" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">
+                        Start Batch Download
+                    </button>
+                </div>
+            </div>
+
+            <!-- Download Progress -->
+            <div x-show="downloadTasks.length > 0" class="mt-8 p-4 bg-gray-800 rounded-lg">
+                <h4 class="text-lg font-semibold">Download Progress</h4>
+                <div class="mt-2 space-y-4">
+                    <template x-for="task in downloadTasks" :key="task.id">
+                        <div>
+                            <p class="truncate" x-text="task.url"></p>
+                            <p class="text-sm font-mono" x-text="task.status"></p>
+                            <div x-show="task.status === 'downloading'" class="w-full bg-gray-700 rounded-full h-2 mt-1">
+                                <div class="bg-red-600 h-2 rounded-full" :style="`width: ${task.progress || 0}%`"></div>
+                            </div>
+                            <div x-show="task.status === 'completed'">
+                                <a :href="task.filepath" target="_blank" class="text-red-500 hover:underline text-sm">Download file</a>
+                            </div>
+                             <div x-show="task.status === 'error'">
+                                <p class="text-red-400 text-sm" x-text="task.error"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+        <div x-show="tab === 'history'" x-data="downloadHistory()" x-init="fetchHistory()">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold">Download History</h2>
+                <button @click="clearHistory" class="bg-red-800 hover:bg-red-700 text-white text-sm py-1 px-3 rounded-lg">Clear History</button>
+            </div>
+
+            <div class="overflow-x-auto bg-gray-800 rounded-lg">
+                <table class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Date</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Title</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">File Path</th>
+                            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-300">Size</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        <template x-if="history.length === 0">
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-gray-500">No history found.</td>
+                            </tr>
+                        </template>
+                        <template x-for="item in history" :key="item.date">
+                            <tr class="hover:bg-gray-700">
+                                <td class="px-4 py-2" x-text="new Date(item.date).toLocaleString()"></td>
+                                <td class="px-4 py-2">
+                                    <a :href="item.url" target="_blank" class="hover:underline" x-text="item.title"></a>
+                                </td>
+                                <td class="px-4 py-2 font-mono" x-text="item.filepath"></td>
+                                <td class="px-4 py-2" x-text="formatFilesize(item.filesize)"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function settingsModal() {
+        return {
+            isOpen: false,
+            form: {
+                max_concurrent_downloads: 3,
+                output_dir: ''
+            },
+            message: '',
+            open() {
+                this.isOpen = true;
+                this.load();
+            },
+            close() {
+                this.isOpen = false;
+                this.message = '';
+            },
+            load() {
+                fetch('/api/settings')
+                    .then(res => res.json())
+                    .then(data => {
+                        this.form = data;
+                    });
+            },
+            save() {
+                fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.form)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        this.message = 'Settings saved. Some changes may require a restart.';
+                        setTimeout(() => this.close(), 2000);
+                    } else {
+                        this.message = 'Failed to save settings.';
+                    }
+                })
+            }
+        }
+    }
+
+    function downloadHistory() {
+        return {
+            history: [],
+            fetchHistory() {
+                fetch('/api/history')
+                    .then(response => response.json())
+                    .then(data => {
+                        this.history = data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    });
+            },
+            clearHistory() {
+                if (!confirm('Are you sure you want to clear the entire download history?')) {
+                    return;
+                }
+                fetch('/api/history/clear', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            this.history = [];
+                        } else {
+                            alert('Failed to clear history.');
+                        }
+                    });
+            },
+            formatFilesize(sizeBytes) {
+                if (!sizeBytes || sizeBytes == 0) return '0 B';
+                const i = parseInt(Math.floor(Math.log(sizeBytes) / Math.log(1024)));
+                return Math.round(sizeBytes / Math.pow(1024, i), 2) + ' ' + ['B', 'KB', 'MB', 'GB', 'TB'][i];
+            }
+        }
+    }
+
+    function batchDownload() {
+        return {
+            urls: '',
+            quality: 'best',
+            downloadTasks: [],
+            statusInterval: null,
+
+            resetDownloads() {
+                this.downloadTasks = [];
+                if (this.statusInterval) {
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                }
+            },
+
+            startBatchDownload() {
+                this.resetDownloads();
+                const urlList = this.urls.split('\n').map(u => u.trim()).filter(u => u);
+                if (urlList.length === 0) {
+                    alert('Please enter at least one URL.');
+                    return;
+                }
+
+                urlList.forEach(url => {
+                    // We don't know the title beforehand, so we'll just use the URL
+                    // The backend will name the file based on the title it discovers
+                    fetch('/api/download', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: url,
+                            format_id: this.quality,
+                            title: url // Pass URL as a placeholder title
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.task_id) {
+                            this.downloadTasks.push({
+                                id: data.task_id,
+                                url: url,
+                                status: 'queued',
+                                progress: 0
+                            });
+                            if (!this.statusInterval) {
+                                this.statusInterval = setInterval(() => this.pollAllStatuses(), 2000);
+                            }
+                        }
+                    })
+                    .catch(console.error);
+                });
+            },
+
+            pollAllStatuses() {
+                let activeTasks = 0;
+                this.downloadTasks.forEach((task, index) => {
+                    if (task.status === 'completed' || task.status === 'error') {
+                        return;
+                    }
+                    activeTasks++;
+                    fetch(`/api/status/${task.id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // The backend discovers the title, so we can update it here
+                        const newTitle = data.log ? (data.log.match(/\[info\]\s+(.*)/) || [])[1] : null;
+                        this.downloadTasks[index] = { ...task, ...data, title: newTitle || task.title };
+                    });
+                });
+
+                if (activeTasks === 0) {
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                }
+            },
+        }
+    }
+
+    function playlistDownload() {
+        return {
+            url: '',
+            loading: false,
+            error: '',
+            playlistTitle: '',
+            videos: [],
+
+            get selectedVideoCount() {
+                return this.videos.filter(v => v.selected).length;
+            },
+
+            quality: 'best',
+            downloadTasks: [],
+            statusInterval: null,
+
+            resetDownloads() {
+                this.downloadTasks = [];
+                if (this.statusInterval) {
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                }
+            },
+
+            fetchPlaylist() {
+                this.loading = true;
+                this.error = '';
+                this.playlistTitle = '';
+                this.videos = [];
+                this.resetDownloads();
+
+                fetch('/api/fetch-playlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: this.url }),
+                })
+                .then(response => {
+                    if (!response.ok) return response.json().then(err => { throw new Error(err.details || 'Failed to fetch playlist') });
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.length > 0) {
+                        this.playlistTitle = data[0].playlist_title || 'Playlist';
+                        this.videos = data.map(v => ({ ...v, selected: true }));
+                    }
+                })
+                .catch(err => { this.error = err.message; })
+                .finally(() => { this.loading = false; });
+            },
+
+            toggleSelectAll(checked) {
+                this.videos.forEach(v => v.selected = checked);
+            },
+
+            startPlaylistDownload() {
+                this.resetDownloads();
+                const selectedVideos = this.videos.filter(v => v.selected);
+                if (selectedVideos.length === 0) {
+                    alert('Please select at least one video to download.');
+                    return;
+                }
+
+                selectedVideos.forEach(video => {
+                    const videoUrl = video.url || `https://www.youtube.com/watch?v=${video.id}`;
+                    fetch('/api/download', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: videoUrl,
+                            format_id: this.quality,
+                            title: video.title
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.task_id) {
+                            this.downloadTasks.push({
+                                id: data.task_id,
+                                title: video.title,
+                                status: 'queued',
+                                progress: 0
+                            });
+                            // Start polling if it's not already running
+                            if (!this.statusInterval) {
+                                this.statusInterval = setInterval(() => this.pollAllStatuses(), 2000);
+                            }
+                        }
+                    })
+                    .catch(console.error);
+                });
+            },
+
+            pollAllStatuses() {
+                let activeTasks = 0;
+                this.downloadTasks.forEach((task, index) => {
+                    if (task.status === 'completed' || task.status === 'error') {
+                        return; // Skip completed or failed tasks
+                    }
+                    activeTasks++;
+                    fetch(`/api/status/${task.id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        this.downloadTasks[index] = { ...task, ...data };
+                    });
+                });
+
+                if (activeTasks === 0) {
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                }
+            },
+
+            formatDuration(duration) {
+                if (!duration) return 'N/A';
+                const d = parseInt(duration, 10);
+                const hrs = Math.floor(d / 3600);
+                const mins = Math.floor((d % 3600) / 60);
+                const secs = d % 60;
+                let result = '';
+                if (hrs > 0) {
+                    result += `${hrs}:` + (mins < 10 ? '0' : '');
+                }
+                result += `${mins}:` + (secs < 10 ? '0' : '');
+                result += `${secs}`;
+                return result;
+            }
+        }
+    }
+
+    function singleDownload() {
+        return {
+            url: '',
+            loading: false,
+            error: '',
+            videoInfo: {},
+            selectedFormat: '',
+            downloadTask: {},
+            statusInterval: null,
+
+            resetDownload() {
+                this.downloadTask = {};
+                if (this.statusInterval) {
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                }
+            },
+
+            fetchInfo() {
+                this.loading = true;
+                this.error = '';
+                this.videoInfo = {};
+                this.resetDownload();
+
+                fetch('/api/fetch-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: this.url }),
+                })
+                .then(response => {
+                    if (!response.ok) return response.json().then(err => { throw new Error(err.details || 'Failed to fetch video info') });
+                    return response.json();
+                })
+                .then(data => {
+                    this.videoInfo = data;
+                    if (data.formats && data.formats.length > 0) {
+                        const bestFormat = data.formats.find(f => f.vcodec !== 'none' && f.acodec !== 'none');
+                        this.selectedFormat = bestFormat ? bestFormat.format_id : data.formats[data.formats.length - 1].format_id;
+                    }
+                })
+                .catch(err => { this.error = err.message; })
+                .finally(() => { this.loading = false; });
+            },
+
+            startDownload() {
+                this.resetDownload();
+                this.downloadTask = { status: 'starting...' };
+
+                fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: this.url,
+                        format_id: this.selectedFormat,
+                        title: this.videoInfo.title
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.task_id) {
+                        this.downloadTask = { id: data.task_id, status: 'queued' };
+                        this.statusInterval = setInterval(() => this.pollStatus(data.task_id), 2000);
+                    } else {
+                        throw new Error('Failed to start download task.');
+                    }
+                })
+                .catch(err => {
+                    this.downloadTask = { status: 'error', error: err.message };
+                });
+            },
+
+            pollStatus(taskId) {
+                fetch(`/api/status/${taskId}`)
+                .then(response => response.json())
+                .then(data => {
+                    this.downloadTask = data;
+                    if (data.status === 'completed' || data.status === 'error') {
+                        clearInterval(this.statusInterval);
+                        this.statusInterval = null;
+                    }
+                })
+                .catch(err => {
+                    this.downloadTask = { status: 'error', error: 'Failed to get task status.' };
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                });
+            },
+            formatDuration(duration) {
+                if (!duration) return 'N/A';
+                const d = parseInt(duration, 10);
+                const hrs = Math.floor(d / 3600);
+                const mins = Math.floor((d % 3600) / 60);
+                const secs = d % 60;
+                let result = '';
+                if (hrs > 0) {
+                    result += `${hrs}:` + (mins < 10 ? '0' : '');
+                }
+                result += `${mins}:` + (secs < 10 ? '0' : '');
+                result += `${secs}`;
+                return result;
+            }
+        }
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+{% endblock %}
